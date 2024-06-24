@@ -87,7 +87,17 @@ void VulkanEngine::cleanup()
 //------------------------------------------------------------------------------
 void VulkanEngine::draw()
 {
+    VK_CHECK(vkWaitForFences(device, 1, &get_current_frame().renderFence, true, uWaitTimeout));
+    VK_CHECK(vkResetFences(device, 1, &get_current_frame().renderFence));
 
+    uint32_t swapchainImageIndex;
+    VK_CHECK(vkAcquireNextImageKHR(
+        device,
+        swapchain,
+        uWaitTimeout,
+        get_current_frame().swapchainSemaphore,
+        nullptr,
+        &swapchainImageIndex));
 }
 
 //------------------------------------------------------------------------------
