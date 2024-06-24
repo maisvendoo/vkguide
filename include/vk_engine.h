@@ -31,11 +31,21 @@ public:
 
     VkDebugUtilsMessengerEXT debug_messeger;
 
-    VkPhysicalDevice choseGPU;
+    VkPhysicalDevice chosenGPU;
 
     VkDevice device;
 
     VkSurfaceKHR surface;
+
+    VkSwapchainKHR swapchain;
+
+    VkFormat swapchainImageFormat;
+
+    std::vector<VkImage> swapchainImages;
+
+    std::vector<VkImageView> swapchainImageViews;
+
+    VkExtent2D swapchainExtent;
 
     static VulkanEngine &Get();
 
@@ -56,6 +66,10 @@ private:
     void init_vulkan();
 
     void init_swapchain();
+
+    void create_swapchain(uint32_t width, uint32_t height);
+
+    void destroy_swapchain();
 
     void init_commands();
 
