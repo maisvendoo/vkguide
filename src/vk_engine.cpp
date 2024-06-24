@@ -53,6 +53,13 @@ void VulkanEngine::cleanup()
 {
     if (isInitialized)
     {
+        vkDeviceWaitIdle(device);
+
+        for (int i = 0; i < FRAME_OVERLAP; ++i)
+        {
+            vkDestroyCommandPool(device, frames[i].commandPool, nullptr);
+        }
+
         destroy_swapchain();
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -158,6 +165,9 @@ void VulkanEngine::init_vulkan()
 
     device = vkbDevice.device;
     chosenGPU = physicalDevice.physical_device;
+
+    graphicsQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
+    graphicsQueueFamily = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
 }
 
 //------------------------------------------------------------------------------
@@ -210,7 +220,18 @@ void VulkanEngine::destroy_swapchain()
 //------------------------------------------------------------------------------
 void VulkanEngine::init_commands()
 {
+    VkCommandPoolCreateInfo commandPoolInfo = vkinit::command_pool_create_info(
+        graphicsQueueFamily,
+        VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
+    for (int i = 0; i < FRAME_OVERLAP; ++i)
+    {
+        VK_CHECK(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frames[i].commandPool));
+
+        VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::command_buffer_allocate_info(frames[i].commandPool, 1);
+
+        VK_CHECK(vkAllocateCommandBuffers(device, &cmdAllocInfo, &frames[i].mainCommandBuffer));
+    }
 }
 
 //------------------------------------------------------------------------------

@@ -10,6 +10,20 @@
 #include    <SDL.h>
 #include    <SDL_vulkan.h>
 
+#include    <vk_initializers.h>
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+struct FrameData
+{
+    VkCommandPool commandPool;
+
+    VkCommandBuffer mainCommandBuffer;
+};
+
+constexpr unsigned int FRAME_OVERLAP = 2;
+
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
@@ -46,6 +60,17 @@ public:
     std::vector<VkImageView> swapchainImageViews;
 
     VkExtent2D swapchainExtent;
+
+    FrameData frames[FRAME_OVERLAP];
+
+    FrameData &get_current_frame()
+    {
+        return frames[frameNumber % FRAME_OVERLAP];
+    }
+
+    VkQueue graphicsQueue;
+
+    uint32_t graphicsQueueFamily;
 
     static VulkanEngine &Get();
 
