@@ -20,6 +20,10 @@ struct FrameData
     VkCommandPool commandPool;
 
     VkCommandBuffer mainCommandBuffer;
+
+    VkSemaphore swapchainSemaphore, renderSemaphore;
+
+    VkFence renderFence;
 };
 
 constexpr unsigned int FRAME_OVERLAP = 2;

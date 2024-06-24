@@ -3,9 +3,11 @@
 #include    <chrono>
 #include    <thread>
 
-constexpr bool bUseValidationLayers = false;
+constexpr bool bUseValidationLayers = true;
 
 VulkanEngine *loadedEngine = nullptr;
+
+constexpr unsigned int uWaitTimeout = 1000000000;
 
 //------------------------------------------------------------------------------
 //
@@ -58,6 +60,10 @@ void VulkanEngine::cleanup()
         for (int i = 0; i < FRAME_OVERLAP; ++i)
         {
             vkDestroyCommandPool(device, frames[i].commandPool, nullptr);
+
+            vkDestroyFence(device, frames[i].renderFence, nullptr);
+            vkDestroySemaphore(device, frames[i].renderSemaphore, nullptr);
+            vkDestroySemaphore(device, frames[i].swapchainSemaphore, nullptr);
         }
 
         destroy_swapchain();
@@ -239,5 +245,14 @@ void VulkanEngine::init_commands()
 //------------------------------------------------------------------------------
 void VulkanEngine::init_sync_structures()
 {
+    VkFenceCreateInfo fenceCreateInfo = vkinit::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+    VkSemaphoreCreateInfo semaphoreCreateInfo = vkinit::semaphore_create_info();
 
+    for (int i = 0; i < FRAME_OVERLAP; ++i)
+    {
+        VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &frames[i].renderFence));
+
+        VK_CHECK(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].swapchainSemaphore));
+        VK_CHECK(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].renderSemaphore));
+    }
 }

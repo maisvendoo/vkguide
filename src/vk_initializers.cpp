@@ -30,3 +30,29 @@ VkCommandBufferAllocateInfo vkinit::command_buffer_allocate_info(VkCommandPool p
 
     return info;
 }
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+VkFenceCreateInfo vkinit::fence_create_info(VkFenceCreateFlags flags)
+{
+    VkFenceCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = flags;
+
+    return info;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+VkSemaphoreCreateInfo vkinit::semaphore_create_info(VkSemaphoreCreateFlags flags)
+{
+    VkSemaphoreCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = flags;
+
+    return info;
+}
