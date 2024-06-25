@@ -57,7 +57,7 @@ void VulkanEngine::cleanup()
     {
         vkDeviceWaitIdle(device);
 
-        for (int i = 0; i < FRAME_OVERLAP; ++i)
+        for (size_t i = 0; i < FRAME_OVERLAP; ++i)
         {
             vkDestroyCommandPool(device, frames[i].commandPool, nullptr);
 
@@ -98,6 +98,14 @@ void VulkanEngine::draw()
         get_current_frame().swapchainSemaphore,
         nullptr,
         &swapchainImageIndex));
+
+    VkCommandBuffer cmd = get_current_frame().mainCommandBuffer;
+
+    VK_CHECK(vkResetCommandBuffer(cmd, 0));
+
+    VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+    VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 }
 
 //------------------------------------------------------------------------------
@@ -225,7 +233,7 @@ void VulkanEngine::destroy_swapchain()
 {
     vkDestroySwapchainKHR(device, swapchain, nullptr);
 
-    for (int i = 0; i < swapchainImageViews.size(); ++i)
+    for (size_t i = 0; i < swapchainImageViews.size(); ++i)
     {
         vkDestroyImageView(device, swapchainImageViews[i], nullptr);
     }
@@ -240,7 +248,7 @@ void VulkanEngine::init_commands()
         graphicsQueueFamily,
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-    for (int i = 0; i < FRAME_OVERLAP; ++i)
+    for (size_t i = 0; i < FRAME_OVERLAP; ++i)
     {
         VK_CHECK(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frames[i].commandPool));
 
@@ -258,7 +266,7 @@ void VulkanEngine::init_sync_structures()
     VkFenceCreateInfo fenceCreateInfo = vkinit::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
     VkSemaphoreCreateInfo semaphoreCreateInfo = vkinit::semaphore_create_info();
 
-    for (int i = 0; i < FRAME_OVERLAP; ++i)
+    for (size_t i = 0; i < FRAME_OVERLAP; ++i)
     {
         VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &frames[i].renderFence));
 
