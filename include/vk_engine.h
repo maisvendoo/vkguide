@@ -15,22 +15,6 @@
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-struct FrameData
-{
-    VkCommandPool commandPool;
-
-    VkCommandBuffer mainCommandBuffer;
-
-    VkSemaphore swapchainSemaphore, renderSemaphore;
-
-    VkFence renderFence;
-};
-
-constexpr unsigned int FRAME_OVERLAP = 2;
-
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
 class VulkanEngine
 {
 public:
@@ -75,6 +59,10 @@ public:
     VkQueue graphicsQueue;
 
     uint32_t graphicsQueueFamily;
+
+    DeletionQueue mainDeletionQueue;
+
+    VmaAllocator allocator;
 
     static VulkanEngine &Get();
 

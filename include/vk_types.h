@@ -31,5 +31,47 @@
                 fmt::print("Detected Vulkan error: {}", string_VkResult(err)); \
             } \
     } while (0) \
+ \
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+struct DeletionQueue
+{
+    std::deque<std::function<void()>> deletors;
+
+    void push_function(std::function<void()> &&function)
+    {
+        deletors.push_back(function);
+    }
+
+    void flush()
+    {
+        for (auto it = deletors.rbegin(); it != deletors.rend(); ++it)
+        {
+            (*it)();
+        }
+
+        deletors.clear();
+    }
+};
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+struct FrameData
+{
+    VkCommandPool commandPool;
+
+    VkCommandBuffer mainCommandBuffer;
+
+    VkSemaphore swapchainSemaphore, renderSemaphore;
+
+    VkFence renderFence;
+
+    DeletionQueue deletionQueue;
+};
+
+constexpr unsigned int FRAME_OVERLAP = 2;
 
 #endif

@@ -5,6 +5,9 @@
 #include    <chrono>
 #include    <thread>
 
+#define     VMA_IMPLEMENTATION
+#include    <vk_mem_alloc.h>
+
 constexpr bool bUseValidationLayers = true;
 
 VulkanEngine *loadedEngine = nullptr;
@@ -66,7 +69,11 @@ void VulkanEngine::cleanup()
             vkDestroyFence(device, frames[i].renderFence, nullptr);
             vkDestroySemaphore(device, frames[i].renderSemaphore, nullptr);
             vkDestroySemaphore(device, frames[i].swapchainSemaphore, nullptr);
+
+            frames[i].deletionQueue.flush();
         }
+
+        mainDeletionQueue.flush();
 
         destroy_swapchain();
 
@@ -90,6 +97,9 @@ void VulkanEngine::cleanup()
 void VulkanEngine::draw()
 {
     VK_CHECK(vkWaitForFences(device, 1, &get_current_frame().renderFence, true, uWaitTimeout));
+
+    get_current_frame().deletionQueue.flush();
+
     VK_CHECK(vkResetFences(device, 1, &get_current_frame().renderFence));
 
     uint32_t swapchainImageIndex;
@@ -147,7 +157,7 @@ void VulkanEngine::draw()
     VK_CHECK(vkQueueSubmit2(graphicsQueue, 1, &submit, get_current_frame().renderFence));
 
     VkPresentInfoKHR presentInfo = {};
-    presentInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.pNext = nullptr;
     presentInfo.pSwapchains = &swapchain;
     presentInfo.swapchainCount = 1;
@@ -246,6 +256,17 @@ void VulkanEngine::init_vulkan()
 
     graphicsQueue = vkbDevice.get_queue(vkb::QueueType::graphics).value();
     graphicsQueueFamily = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
+
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.physicalDevice = chosenGPU;
+    allocatorInfo.device = device;
+    allocatorInfo.instance = instance;
+    allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+    vmaCreateAllocator(&allocatorInfo, &allocator);
+
+    mainDeletionQueue.push_function([&]() {
+       vmaDestroyAllocator(allocator);
+    });
 }
 
 //------------------------------------------------------------------------------
