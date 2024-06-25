@@ -1,5 +1,7 @@
 #include    <vk_engine.h>
 
+#include    <vk_images.h>
+
 #include    <chrono>
 #include    <thread>
 
@@ -106,6 +108,31 @@ void VulkanEngine::draw()
     VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
     VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
+
+    vkutil::transition_image(cmd,
+                             swapchainImages[swapchainImageIndex],
+                             VK_IMAGE_LAYOUT_UNDEFINED,
+                             VK_IMAGE_LAYOUT_GENERAL);
+
+    VkClearColorValue clearValue;
+    float flash = std::abs(std::sin(frameNumber / 120.f));
+    clearValue = { {0.0f, 0.0f, flash, 1.0f} };
+
+    VkImageSubresourceRange clearRange = vkinit::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    vkCmdClearColorImage(cmd,
+                         swapchainImages[swapchainImageIndex],
+                         VK_IMAGE_LAYOUT_GENERAL,
+                         &clearValue,
+                         1,
+                         &clearRange);
+
+    vkutil::transition_image(cmd,
+                             swapchainImages[swapchainImageIndex],
+                             VK_IMAGE_LAYOUT_GENERAL,
+                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    VK_CHECK(vkEndCommandBuffer(cmd));
 }
 
 //------------------------------------------------------------------------------
