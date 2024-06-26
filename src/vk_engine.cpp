@@ -117,32 +117,22 @@ void VulkanEngine::draw()
 
     VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
+    //
     VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 
-    vkutil::transition_image(cmd,
-                             swapchainImages[swapchainImageIndex],
-                             VK_IMAGE_LAYOUT_UNDEFINED,
-                             VK_IMAGE_LAYOUT_GENERAL);
+    vkutil::transition_image(cmd, drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    VkClearColorValue clearValue;
-    float flash = std::abs(std::sin(frameNumber / 120.f));
-    clearValue = { {0.0f, 0.0f, flash, 1.0f} };
+    draw_background(cmd);
 
-    VkImageSubresourceRange clearRange = vkinit::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+    vkutil::transition_image(cmd, drawImage.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    vkutil::transition_image(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    vkCmdClearColorImage(cmd,
-                         swapchainImages[swapchainImageIndex],
-                         VK_IMAGE_LAYOUT_GENERAL,
-                         &clearValue,
-                         1,
-                         &clearRange);
+    vkutil::copy_image_to_image(cmd, drawImage.image, swapchainImages[swapchainImageIndex], drawExtent, swapchainExtent);
 
-    vkutil::transition_image(cmd,
-                             swapchainImages[swapchainImageIndex],
-                             VK_IMAGE_LAYOUT_GENERAL,
-                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    vkutil::transition_image(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     VK_CHECK(vkEndCommandBuffer(cmd));
+    //
 
     VkCommandBufferSubmitInfo cmdInfo = vkinit::command_buffer_submit_info(cmd);
 
