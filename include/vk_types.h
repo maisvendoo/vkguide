@@ -74,4 +74,16 @@ struct FrameData
 
 constexpr unsigned int FRAME_OVERLAP = 2;
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+struct AllocatedImage
+{
+    VkImage         image;
+    VkImageView     imageView;
+    VmaAllocation   allocation;
+    VkExtent3D      imageExtent;
+    VkFormat        imageFormat;
+};
+
 #endif

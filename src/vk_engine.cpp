@@ -175,6 +175,25 @@ void VulkanEngine::draw()
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
+void VulkanEngine::draw_background(VkCommandBuffer cmd)
+{
+    VkClearColorValue clearValue;
+    float flash = std::abs(std::sin(frameNumber / 120.0f));
+    clearValue = { {0.0f, 0.0f, flash, 1.0f} };
+
+    VkImageSubresourceRange clearRange = vkinit::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    vkCmdClearColorImage(cmd,
+                         drawImage.image,
+                         VK_IMAGE_LAYOUT_GENERAL,
+                         &clearValue,
+                         1,
+                         &clearRange);
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 void VulkanEngine::run()
 {
     SDL_Event e;
@@ -275,6 +294,47 @@ void VulkanEngine::init_vulkan()
 void VulkanEngine::init_swapchain()
 {
     create_swapchain(windowExtent.width, windowExtent.height);
+
+    VkExtent3D drawImageExtent = {
+        windowExtent.width,
+        windowExtent.height,
+        1
+    };
+
+    drawImage.imageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+    drawImage.imageExtent = drawImageExtent;
+
+    VkImageUsageFlags drawImageUsages{};
+    drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
+    drawImageUsages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    VkImageCreateInfo rimg_info = vkinit::image_create_info(drawImage.imageFormat,
+                                                            drawImageUsages,
+                                                            drawImageExtent);
+
+    VmaAllocationCreateInfo rimg_allocinfo = {};
+    rimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    rimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    vmaCreateImage(allocator,
+                   &rimg_info,
+                   &rimg_allocinfo,
+                   &drawImage.image,
+                   &drawImage.allocation,
+                   nullptr);
+
+    VkImageViewCreateInfo rview_info = vkinit::imageview_create_info(drawImage.imageFormat,
+                                                                     drawImage.image,
+                                                                     VK_IMAGE_ASPECT_COLOR_BIT);
+
+    VK_CHECK(vkCreateImageView(device, &rview_info, nullptr, &drawImage.imageView));
+
+    mainDeletionQueue.push_function([&]() {
+        vkDestroyImageView(device, drawImage.imageView, nullptr);
+        vmaDestroyImage(allocator, drawImage.image, drawImage.allocation);
+    });
 }
 
 //------------------------------------------------------------------------------

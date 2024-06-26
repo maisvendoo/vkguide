@@ -64,6 +64,10 @@ public:
 
     VmaAllocator allocator;
 
+    AllocatedImage drawImage;
+
+    VkExtent2D drawExtent;
+
     static VulkanEngine &Get();
 
     // Инициализация движка
@@ -74,6 +78,9 @@ public:
 
     // Цикл отрисовки
     void draw();
+
+    // Рисование фона
+    void draw_background(VkCommandBuffer cmd);
 
     // Главный цикл приложения
     void run();
